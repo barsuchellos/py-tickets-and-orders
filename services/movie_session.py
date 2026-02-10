@@ -7,8 +7,7 @@ def create_movie_session(
         movie_show_time: str,
         movie_id: int,
         cinema_hall_id: int
-) -> "MovieSession":
-    from db.models import MovieSession
+) -> MovieSession:
     return MovieSession.objects.create(
         show_time=movie_show_time,
         movie_id=movie_id,
@@ -18,7 +17,7 @@ def create_movie_session(
 
 def get_movies_sessions(
         session_date: str = None
-) -> "QuerySet[MovieSession]":
+) -> QuerySet[MovieSession]:
     from db.models import MovieSession
     queryset = MovieSession.objects.all()
     if session_date is not None:
@@ -26,7 +25,7 @@ def get_movies_sessions(
     return queryset
 
 
-def get_movie_session_by_id(movie_session_id: int) -> "MovieSession":
+def get_movie_session_by_id(movie_session_id: int) -> MovieSession:
     from db.models import MovieSession
     return MovieSession.objects.get(id=movie_session_id)
 
@@ -37,8 +36,7 @@ def update_movie_session(
         movie_id: int = None,
         cinema_hall_id: int = None,
 ) -> None:
-    from db.models import MovieSession
-    movie_session = MovieSession.objects.get(id=session_id)
+    movie_session = get_movie_session_by_id(session_id)
     if show_time is not None:
         movie_session.show_time = show_time
     if movie_id is not None:

@@ -1,14 +1,10 @@
 from datetime import datetime
-from typing import TYPE_CHECKING
 
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.db.models import QuerySet
 
 from db.models import Order, MovieSession, Ticket
-
-if TYPE_CHECKING:
-    pass
 
 
 @transaction.atomic
@@ -22,16 +18,21 @@ def create_order(
     order = Order.objects.create(user=user)
 
     if date:
-        parsed_date = datetime.strptime(date, "%Y-%m-%d %H:%M")
-        order.created_at = parsed_date
-        order.save(update_fields=["created_at"])
+        Order.objects.filter(id=order.id).update(
+            created_at=datetime.strptime(
+                date, "%Y-%m-%d %H:%M"
+            )
+        )
 
-    movie_session_ids = [item["movie_session"] for item in tickets]
+    movie_session_ids = {item["movie_session"] for item in tickets}
     queryset = MovieSession.objects.filter(id__in=movie_session_ids)
     movie_sessions_dict = {
         session.id: session
         for session in queryset
     }
+
+    if len(movie_sessions_dict) != len(movie_session_ids):
+        raise ValueError("Some movie sessions do not exist")
 
     tickets_list = [
         Ticket(
@@ -48,7 +49,7 @@ def create_order(
     Ticket.objects.bulk_create(tickets_list)
 
 
-def get_orders(username: str = None) -> "QuerySet[Order]":
+def get_orders(username: str = None) -> QuerySet[Order]:
     queryset = Order.objects.select_related("user").all()
 
     if username is not None:
